@@ -8,7 +8,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from data_analyzer import DataAnalyzer
-import io
 
 # Page configuration
 st.set_page_config(

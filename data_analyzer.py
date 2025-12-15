@@ -11,7 +11,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from scipy import stats
 from typing import List, Dict, Tuple, Optional
-import io
 
 
 class DataAnalyzer:

@@ -4,6 +4,8 @@ Test script for the Data Analyzer module
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import tempfile
+import os
 from data_analyzer import DataAnalyzer
 
 def test_data_analyzer():
@@ -87,27 +89,30 @@ def test_data_analyzer():
     print("-" * 60)
     
     try:
+        # Create temporary directory for output files
+        temp_dir = tempfile.gettempdir()
+        
         # Test histogram
         fig = analyzer.plot_histogram(df1, 'Age')
-        plt.savefig('/tmp/test_histogram.png')
+        plt.savefig(os.path.join(temp_dir, 'test_histogram.png'))
         plt.close()
         print("✓ Histogram created successfully")
         
         # Test correlation heatmap
         fig = analyzer.plot_correlation_heatmap(df1)
-        plt.savefig('/tmp/test_heatmap.png')
+        plt.savefig(os.path.join(temp_dir, 'test_heatmap.png'))
         plt.close()
         print("✓ Correlation heatmap created successfully")
         
         # Test box plot
         fig = analyzer.plot_box(df1, ['Age', 'Salary', 'Experience'])
-        plt.savefig('/tmp/test_boxplot.png')
+        plt.savefig(os.path.join(temp_dir, 'test_boxplot.png'))
         plt.close()
         print("✓ Box plot created successfully")
         
         # Test scatter plot
         fig = analyzer.plot_scatter(df1, 'Experience', 'Salary', color_col='Department')
-        fig.write_html('/tmp/test_scatter.html')
+        fig.write_html(os.path.join(temp_dir, 'test_scatter.html'))
         print("✓ Scatter plot created successfully")
         
     except Exception as e:
