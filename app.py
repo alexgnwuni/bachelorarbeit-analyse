@@ -311,114 +311,234 @@ else:
                 else:
                     st.warning("Please select at least 2 columns for pair plot")
     
-    # Tab 4: Advanced Analysis
+    # Tab 4: Advanced Analysis (inkl. Bias-Erkennungs-Analyse)
     with tab4:
         st.markdown('<p class="sub-header">Advanced Analysis</p>', unsafe_allow_html=True)
         
-        dataset_name = st.selectbox("Select Dataset", 
-                                   list(st.session_state.datasets_loaded.keys()),
-                                   key="advanced_dataset")
+        analysis_section = st.selectbox(
+            "Select Analysis Module",
+            ["General Statistics", "Bias Detection vs Age"],
+            key="advanced_section"
+        )
         
-        if dataset_name:
-            df = st.session_state.analyzer.get_dataset(dataset_name)
+        st.markdown("---")
+        
+        if analysis_section == "General Statistics":
+            dataset_name = st.selectbox("Select Dataset", 
+                                       list(st.session_state.datasets_loaded.keys()),
+                                       key="advanced_dataset")
             
-            analysis_type = st.selectbox("Select Analysis Type",
-                                        ["Distribution Analysis", "Outlier Detection",
-                                         "Group Statistics"])
-            
-            st.markdown("---")
-            
-            if analysis_type == "Distribution Analysis":
-                st.subheader("📐 Distribution Analysis")
-                numeric_cols = df.select_dtypes(include='number').columns.tolist()
+            if dataset_name:
+                df = st.session_state.analyzer.get_dataset(dataset_name)
                 
-                col = st.selectbox("Select Column", numeric_cols)
+                analysis_type = st.selectbox("Select Analysis Type",
+                                            ["Distribution Analysis", "Outlier Detection",
+                                             "Group Statistics"])
                 
-                if col:
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.write("**Basic Statistics**")
-                        stats_data = {
-                            "Mean": df[col].mean(),
-                            "Median": df[col].median(),
-                            "Std Dev": df[col].std(),
-                            "Min": df[col].min(),
-                            "Max": df[col].max(),
-                            "Skewness": df[col].skew(),
-                            "Kurtosis": df[col].kurtosis()
-                        }
-                        st.dataframe(pd.DataFrame(stats_data.items(), 
-                                                 columns=['Metric', 'Value']))
-                    
-                    with col2:
-                        st.write("**Percentiles**")
-                        percentiles = [0.05, 0.25, 0.5, 0.75, 0.95]
-                        perc_data = {f"{int(p*100)}%": df[col].quantile(p) 
-                                    for p in percentiles}
-                        st.dataframe(pd.DataFrame(perc_data.items(),
-                                                 columns=['Percentile', 'Value']))
-            
-            elif analysis_type == "Outlier Detection":
-                st.subheader("🎯 Outlier Detection (IQR Method)")
-                numeric_cols = df.select_dtypes(include='number').columns.tolist()
+                st.markdown("---")
                 
-                col = st.selectbox("Select Column", numeric_cols)
-                
-                if col:
-                    Q1 = df[col].quantile(0.25)
-                    Q3 = df[col].quantile(0.75)
-                    IQR = Q3 - Q1
-                    lower_bound = Q1 - 1.5 * IQR
-                    upper_bound = Q3 + 1.5 * IQR
+                if analysis_type == "Distribution Analysis":
+                    st.subheader("📐 Distribution Analysis")
+                    numeric_cols = df.select_dtypes(include='number').columns.tolist()
                     
-                    outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
-                    
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Total Outliers", len(outliers))
-                    with col2:
-                        st.metric("Lower Bound", f"{lower_bound:.2f}")
-                    with col3:
-                        st.metric("Upper Bound", f"{upper_bound:.2f}")
-                    
-                    if len(outliers) > 0:
-                        st.write("**Outlier Records:**")
-                        st.dataframe(outliers, use_container_width=True)
-            
-            elif analysis_type == "Group Statistics":
-                st.subheader("📊 Group Statistics")
-                
-                categorical_cols = df.select_dtypes(include='object').columns.tolist()
-                numeric_cols = df.select_dtypes(include='number').columns.tolist()
-                
-                if not categorical_cols:
-                    st.warning("No categorical columns found for grouping")
-                elif not numeric_cols:
-                    st.warning("No numerical columns found for analysis")
-                else:
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        group_col = st.selectbox("Group By", categorical_cols)
-                    with col2:
-                        value_col = st.selectbox("Analyze Column", numeric_cols)
-                    
-                    if group_col and value_col:
-                        group_stats = df.groupby(group_col)[value_col].agg([
-                            'count', 'mean', 'median', 'std', 'min', 'max'
-                        ]).round(2)
-                        st.dataframe(group_stats, use_container_width=True)
+                    if not numeric_cols:
+                        st.warning("No numerical columns available for distribution analysis")
+                    else:
+                        col = st.selectbox("Select Column", numeric_cols)
                         
-                        # Visualize grouped data
-                        fig, ax = plt.subplots(figsize=(10, 6))
-                        df.groupby(group_col)[value_col].mean().plot(kind='bar', ax=ax, color='steelblue')
-                        ax.set_ylabel(f'Mean {value_col}')
-                        ax.set_title(f'Mean {value_col} by {group_col}')
-                        ax.grid(axis='y', alpha=0.3)
-                        plt.xticks(rotation=45, ha='right')
-                        plt.tight_layout()
-                        st.pyplot(fig)
-                        plt.close()
+                        if col:
+                            col1, col2 = st.columns(2)
+                            
+                            with col1:
+                                st.write("**Basic Statistics**")
+                                stats_data = {
+                                    "Mean": df[col].mean(),
+                                    "Median": df[col].median(),
+                                    "Std Dev": df[col].std(),
+                                    "Min": df[col].min(),
+                                    "Max": df[col].max(),
+                                    "Skewness": df[col].skew(),
+                                    "Kurtosis": df[col].kurtosis()
+                                }
+                                st.dataframe(pd.DataFrame(stats_data.items(), 
+                                                         columns=['Metric', 'Value']))
+                            
+                            with col2:
+                                st.write("**Percentiles**")
+                                percentiles = [0.05, 0.25, 0.5, 0.75, 0.95]
+                                perc_data = {f"{int(p*100)}%": df[col].quantile(p) 
+                                            for p in percentiles}
+                                st.dataframe(pd.DataFrame(perc_data.items(),
+                                                         columns=['Percentile', 'Value']))
+                
+                elif analysis_type == "Outlier Detection":
+                    st.subheader("🎯 Outlier Detection (IQR Method)")
+                    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+                    
+                    if not numeric_cols:
+                        st.warning("No numerical columns available for outlier detection")
+                    else:
+                        col = st.selectbox("Select Column", numeric_cols)
+                        
+                        if col:
+                            Q1 = df[col].quantile(0.25)
+                            Q3 = df[col].quantile(0.75)
+                            IQR = Q3 - Q1
+                            lower_bound = Q1 - 1.5 * IQR
+                            upper_bound = Q3 + 1.5 * IQR
+                            
+                            outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
+                            
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Total Outliers", len(outliers))
+                            with col2:
+                                st.metric("Lower Bound", f"{lower_bound:.2f}")
+                            with col3:
+                                st.metric("Upper Bound", f"{upper_bound:.2f}")
+                            
+                            if len(outliers) > 0:
+                                st.write("**Outlier Records:**")
+                                st.dataframe(outliers, use_container_width=True)
+                
+                elif analysis_type == "Group Statistics":
+                    st.subheader("📊 Group Statistics")
+                    
+                    categorical_cols = df.select_dtypes(include='object').columns.tolist()
+                    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+                    
+                    if not categorical_cols:
+                        st.warning("No categorical columns found for grouping")
+                    elif not numeric_cols:
+                        st.warning("No numerical columns found for analysis")
+                    else:
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            group_col = st.selectbox("Group By", categorical_cols)
+                        with col2:
+                            value_col = st.selectbox("Analyze Column", numeric_cols)
+                        
+                        if group_col and value_col:
+                            group_stats = df.groupby(group_col)[value_col].agg([
+                                'count', 'mean', 'median', 'std', 'min', 'max'
+                            ]).round(2)
+                            st.dataframe(group_stats, use_container_width=True)
+                            
+                            # Visualize grouped data
+                            fig, ax = plt.subplots(figsize=(10, 6))
+                            df.groupby(group_col)[value_col].mean().plot(kind='bar', ax=ax, color='steelblue')
+                            ax.set_ylabel(f'Mean {value_col}')
+                            ax.set_title(f'Mean {value_col} by {group_col}')
+                            ax.grid(axis='y', alpha=0.3)
+                            plt.xticks(rotation=45, ha='right')
+                            plt.tight_layout()
+                            st.pyplot(fig)
+                            plt.close()
+        
+        elif analysis_section == "Bias Detection vs Age":
+            st.subheader("🧠 Bias Detection vs Age")
+            st.write(
+                "Analyze how participants' age relates to their ability to correctly "
+                "identify biased scenarios. This expects:\n"
+                "- A *participants* dataset with columns like `id`, `age`, `ai_knowledge`, …\n"
+                "- A *scenario runs* dataset with columns `participant_id`, `is_correct`, and optionally `is_biased`."
+            )
+            
+            dataset_names = list(st.session_state.datasets_loaded.keys())
+            if len(dataset_names) < 2:
+                st.info("Please load at least two datasets (participants and scenario_runs) in the sidebar.")
+            else:
+                col1, col2 = st.columns(2)
+                with col1:
+                    participants_ds = st.selectbox(
+                        "Participants Dataset",
+                        dataset_names,
+                        key="bias_participants_ds"
+                    )
+                with col2:
+                    runs_ds = st.selectbox(
+                        "Scenario Runs Dataset",
+                        [d for d in dataset_names if d != participants_ds],
+                        key="bias_runs_ds"
+                    )
+                
+                biased_only = st.checkbox(
+                    "Use only biased scenarios (if column `is_biased` exists)",
+                    value=True
+                )
+                min_trials = st.slider(
+                    "Minimum number of trials per participant",
+                    min_value=1,
+                    max_value=20,
+                    value=1
+                )
+                corr_method = st.selectbox(
+                    "Correlation Method",
+                    ["spearman", "pearson"],
+                    index=0
+                )
+                
+                if st.button("Compute Bias Detection Performance", type="primary"):
+                    try:
+                        runs_df = st.session_state.analyzer.get_dataset(runs_ds)
+                        participants_df = st.session_state.analyzer.get_dataset(participants_ds)
+                        
+                        perf_df = st.session_state.analyzer.compute_bias_detection_performance(
+                            runs_df,
+                            participants_df,
+                            biased_only=biased_only
+                        )
+                        
+                        # Filter by minimum trials
+                        if "n_trials" in perf_df.columns:
+                            perf_df = perf_df[perf_df["n_trials"] >= min_trials]
+                        
+                        st.success(f"Computed performance for {len(perf_df)} participants.")
+                        
+                        st.subheader("📄 Participant Bias Detection Summary")
+                        show_cols = [c for c in ["participant_id", "age", "gender", "n_trials", "n_correct", "accuracy"] if c in perf_df.columns]
+                        st.dataframe(perf_df[show_cols], use_container_width=True)
+                        
+                        # Correlation age vs accuracy
+                        stats_result = st.session_state.analyzer.correlation_age_vs_bias_performance(
+                            perf_df,
+                            min_trials=min_trials,
+                            method=corr_method
+                        )
+                        
+                        col_a, col_b, col_c = st.columns(3)
+                        with col_a:
+                            st.metric("Correlation (age vs accuracy)", f"{stats_result['correlation']:.3f}" if not pd.isna(stats_result['correlation']) else "n/a")
+                        with col_b:
+                            st.metric("p-value", f"{stats_result['p_value']:.4f}" if not pd.isna(stats_result['p_value']) else "n/a")
+                        with col_c:
+                            st.metric("N (participants)", stats_result["n"])
+                        
+                        # Scatter plot
+                        if not perf_df[["age", "accuracy"]].dropna().empty:
+                            st.subheader("📉 Scatter Plot: Age vs Bias Detection Accuracy")
+                            fig, ax = plt.subplots(figsize=(8, 5))
+                            scatter_df = perf_df[["age", "accuracy"]].dropna()
+                            ax.scatter(scatter_df["age"], scatter_df["accuracy"], alpha=0.7)
+                            ax.set_xlabel("Age")
+                            ax.set_ylabel("Bias Detection Accuracy")
+                            ax.set_title("Age vs Bias Detection Accuracy")
+                            ax.grid(alpha=0.3)
+                            plt.tight_layout()
+                            st.pyplot(fig)
+                            plt.close()
+                        
+                        # Store derived dataset for further analysis in other tabs
+                        derived_name = f"BiasPerformance_{participants_ds}_{runs_ds}"
+                        st.session_state.analyzer.datasets[derived_name] = perf_df
+                        st.session_state.datasets_loaded[derived_name] = True
+                        st.info(
+                            f"Derived dataset '{derived_name}' is now available in other tabs "
+                            f"(e.g. for additional correlations or visualizations)."
+                        )
+                    
+                    except Exception as e:
+                        st.error(f"Error computing bias detection performance: {str(e)}")
     
     # Tab 5: Data Merging
     with tab5:
