@@ -1,0 +1,11 @@
+Department,Budget,Headcount,Performance_Score,Location
+Engineering,500000,8,4.5,Building_A
+Sales,300000,6,4.2,Building_B
+Marketing,250000,6,4.0,Building_C
+HR,150000,3,4.3,Building_A
+Finance,200000,4,4.4,Building_B
+IT,350000,5,4.6,Building_A
+Operations,280000,7,4.1,Building_C
+Legal,180000,3,4.2,Building_B
+Research,400000,6,4.7,Building_A
+Support,160000,5,3.9,Building_C
