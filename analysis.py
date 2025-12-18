@@ -95,30 +95,40 @@ def aggregate_user_stats(df):
 
 def run_statistics(user_stats, df):
     print("=== STATISTISCHE AUSWERTUNG ===\n")
+    
+    # Gesamtanzahl aller Teilnehmer (mit Accuracy)
+    total_with_accuracy = len(user_stats[user_stats['accuracy'].notna()])
+    print(f"Gesamt Teilnehmer mit Accuracy-Daten: {total_with_accuracy}\n")
 
     # A) Hypothese: Alter vs. Accuracy
+    # Verwendet ALLE Teilnehmer mit Alter und Accuracy (auch ohne Geschlecht)
     valid_age = user_stats[['age', 'accuracy']].dropna()
     corr_age, p_age = stats.spearmanr(valid_age['age'], valid_age['accuracy'])
     print(f"1. Alter vs. Erkennungsleistung (Spearman):")
+    print(f"   Teilnehmer (n={len(valid_age)}): Alle mit Alter und Accuracy")
     print(f"   Korrelation (rho): {corr_age:.3f}")
     print(f"   p-Wert: {p_age:.4f}")
     if p_age < 0.05: print("   -> Signifikanter Zusammenhang!")
     print("-" * 30)
 
     # B) Hypothese: KI-Wissen vs. Accuracy
+    # Verwendet ALLE Teilnehmer mit KI-Wissen und Accuracy (auch ohne Geschlecht)
     valid_know = user_stats[['ai_knowledge', 'accuracy']].dropna()
     corr_know, p_know = stats.spearmanr(valid_know['ai_knowledge'], valid_know['accuracy'])
     print(f"2. KI-Wissen vs. Erkennungsleistung (Spearman):")
+    print(f"   Teilnehmer (n={len(valid_know)}): Alle mit KI-Wissen und Accuracy")
     print(f"   Korrelation (rho): {corr_know:.3f}")
     print(f"   p-Wert: {p_know:.4f}")
     print("-" * 30)
 
     # C) Gruppe: Geschlecht (Mann vs. Frau)
+    # Verwendet NUR Teilnehmer MIT Geschlecht (13 von 19)
     # Filterung auf Strings, um Varianten wie "Männlich", "männlich", "Mann" abzufangen
     males = user_stats[user_stats['gender'].str.lower().str.contains('männlich|mann', na=False)]['accuracy']
     females = user_stats[user_stats['gender'].str.lower().str.contains('weiblich|frau', na=False)]['accuracy']
     
     print(f"3. Geschlechtervergleich (Mann-Whitney-U):")
+    print(f"   Teilnehmer (n={len(males) + len(females)}): Nur mit Geschlecht angegeben")
     print(f"   Männer (n={len(males)}) Ø Accuracy: {males.mean():.2%}")
     print(f"   Frauen (n={len(females)}) Ø Accuracy: {females.mean():.2%}")
     
