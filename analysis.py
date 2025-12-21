@@ -11,8 +11,8 @@ import re
 
 def load_and_clean_data(runs_path, participants_path):
     # Laden der CSV-Dateien
-    runs = pd.read_csv("scenario_runs_rows-6.csv")
-    participants = pd.read_csv("participants_rows-7.csv")
+    runs = pd.read_csv("scenario_runs_rows-8.csv")
+    participants = pd.read_csv("participants_rows-9.csv")
 
     # Umbenennen für sauberen Merge
     participants.rename(columns={'id': 'participant_id'}, inplace=True)
@@ -98,7 +98,11 @@ def run_statistics(user_stats, df):
     
     # Gesamtanzahl aller Teilnehmer (mit Accuracy)
     total_with_accuracy = len(user_stats[user_stats['accuracy'].notna()])
-    print(f"Gesamt Teilnehmer mit Accuracy-Daten: {total_with_accuracy}\n")
+    print(f"Gesamt Teilnehmer mit Accuracy-Daten: {total_with_accuracy}")
+    
+    # Durchschnittliche Runs pro Teilnehmer
+    avg_runs = user_stats['num_scenarios'].mean()
+    print(f"Durchschnittliche Runs pro Teilnehmer: {avg_runs:.2f}\n")
 
     # A) Hypothese: Alter vs. Accuracy
     # Verwendet ALLE Teilnehmer mit Alter und Accuracy (auch ohne Geschlecht)
@@ -244,8 +248,8 @@ def plot_results(user_stats, acc_by_cat, keyword_counts):
 
 if __name__ == "__main__":
     # Dateinamen anpassen, falls nötig
-    FILE_RUNS = 'scenario_runs_rows-6.csv'
-    FILE_PARTICIPANTS = 'participants_rows-7.csv'
+    FILE_RUNS = 'scenario_runs_rows-8.csv'
+    FILE_PARTICIPANTS = 'participants_rows-9.csv'
 
     try:
         # 1. Daten laden
