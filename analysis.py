@@ -33,6 +33,8 @@ def load_and_clean_data(runs_path, participants_path):
     df['is_correct'] = df['is_correct'].apply(parse_bool)            # Hat der User es richtig erkannt?
     df['age'] = pd.to_numeric(df['age'], errors='coerce')
     df['ai_knowledge'] = pd.to_numeric(df['ai_knowledge'], errors='coerce')
+    df['ai_attitude'] = pd.to_numeric(df['ai_attitude'], errors='coerce')
+    df['ai_reliance'] = pd.to_numeric(df['ai_reliance'], errors='coerce')
 
     # Ableitung der User-Antwort (Wichtig für False Positive Rate)
     # Logik: Wenn User richtig lag, entspricht seine Antwort dem Ground Truth. Sonst dem Gegenteil.
@@ -69,6 +71,8 @@ def aggregate_user_stats(df):
         'age': 'first',
         'gender': 'first',
         'ai_knowledge': 'first',
+        'ai_attitude': 'first',
+        'ai_reliance': 'first',
         'id': 'count'                  # Anzahl bearbeiteter Szenarien
     }).rename(columns={'is_correct': 'accuracy', 'id': 'num_scenarios'})
 
@@ -103,6 +107,58 @@ def run_statistics(user_stats, df):
     # Durchschnittliche Runs pro Teilnehmer
     avg_runs = user_stats['num_scenarios'].mean()
     print(f"Durchschnittliche Runs pro Teilnehmer: {avg_runs:.2f}\n")
+    
+    # Demografische Statistiken
+    print("=== DEMOGRAFISCHE ANGABEN ===\n")
+    
+    # Durchschnittsalter
+    ages = user_stats['age'].dropna()
+    if len(ages) > 0:
+        avg_age = ages.mean()
+        min_age = ages.min()
+        max_age = ages.max()
+        print(f"Durchschnittsalter: {avg_age:.1f} Jahre (n={len(ages)}, Min: {min_age:.0f}, Max: {max_age:.0f})")
+    else:
+        print("Durchschnittsalter: Keine Daten verfügbar")
+    
+    # Durchschnittliches KI-Wissen
+    ai_knowledge = user_stats['ai_knowledge'].dropna()
+    if len(ai_knowledge) > 0:
+        avg_ai_knowledge = ai_knowledge.mean()
+        print(f"Durchschnittliches KI-Wissen (1-5): {avg_ai_knowledge:.2f} (n={len(ai_knowledge)})")
+    else:
+        print("Durchschnittliches KI-Wissen: Keine Daten verfügbar")
+    
+    # Durchschnittliche AI-Attitude
+    ai_attitude = user_stats['ai_attitude'].dropna()
+    if len(ai_attitude) > 0:
+        avg_ai_attitude = ai_attitude.mean()
+        print(f"Durchschnittliche AI-Attitude (1-5): {avg_ai_attitude:.2f} (n={len(ai_attitude)})")
+    else:
+        print("Durchschnittliche AI-Attitude: Keine Daten verfügbar")
+    
+    # Durchschnittliche AI-Reliance
+    ai_reliance = user_stats['ai_reliance'].dropna()
+    if len(ai_reliance) > 0:
+        avg_ai_reliance = ai_reliance.mean()
+        print(f"Durchschnittliche AI-Reliance (1-5): {avg_ai_reliance:.2f} (n={len(ai_reliance)})")
+    else:
+        print("Durchschnittliche AI-Reliance: Keine Daten verfügbar")
+    
+    # Geschlechterverteilung
+    print("\nGeschlechterverteilung:")
+    # Erstelle eine Kopie für sichere String-Operationen
+    gender_lower = user_stats['gender'].astype(str).str.lower()
+    males = user_stats[gender_lower.str.contains('männlich|mann', na=False, regex=True)]
+    females = user_stats[gender_lower.str.contains('weiblich|frau', na=False, regex=True)]
+    no_gender = user_stats[user_stats['gender'].isna()]
+    
+    print(f"   Männlich: {len(males)} ({len(males)/total_with_accuracy*100:.1f}%)")
+    print(f"   Weiblich: {len(females)} ({len(females)/total_with_accuracy*100:.1f}%)")
+    if len(no_gender) > 0:
+        print(f"   Keine Angabe: {len(no_gender)} ({len(no_gender)/total_with_accuracy*100:.1f}%)")
+    
+    print("\n" + "=" * 30 + "\n")
 
     # A) Hypothese: Alter vs. Accuracy
     # Verwendet ALLE Teilnehmer mit Alter und Accuracy (auch ohne Geschlecht)
@@ -123,6 +179,28 @@ def run_statistics(user_stats, df):
     print(f"   Teilnehmer (n={len(valid_know)}): Alle mit KI-Wissen und Accuracy")
     print(f"   Korrelation (rho): {corr_know:.3f}")
     print(f"   p-Wert: {p_know:.4f}")
+    print("-" * 30)
+
+    # B2) Hypothese: AI-Attitude vs. Accuracy
+    # Verwendet ALLE Teilnehmer mit AI-Attitude und Accuracy
+    valid_attitude = user_stats[['ai_attitude', 'accuracy']].dropna()
+    corr_attitude, p_attitude = stats.spearmanr(valid_attitude['ai_attitude'], valid_attitude['accuracy'])
+    print(f"2a. AI-Attitude vs. Erkennungsleistung (Spearman):")
+    print(f"   Teilnehmer (n={len(valid_attitude)}): Alle mit AI-Attitude und Accuracy")
+    print(f"   Korrelation (rho): {corr_attitude:.3f}")
+    print(f"   p-Wert: {p_attitude:.4f}")
+    if p_attitude < 0.05: print("   -> Signifikanter Zusammenhang!")
+    print("-" * 30)
+
+    # B3) Hypothese: AI-Reliance vs. Accuracy
+    # Verwendet ALLE Teilnehmer mit AI-Reliance und Accuracy
+    valid_reliance = user_stats[['ai_reliance', 'accuracy']].dropna()
+    corr_reliance, p_reliance = stats.spearmanr(valid_reliance['ai_reliance'], valid_reliance['accuracy'])
+    print(f"2b. AI-Reliance vs. Erkennungsleistung (Spearman):")
+    print(f"   Teilnehmer (n={len(valid_reliance)}): Alle mit AI-Reliance und Accuracy")
+    print(f"   Korrelation (rho): {corr_reliance:.3f}")
+    print(f"   p-Wert: {p_reliance:.4f}")
+    if p_reliance < 0.05: print("   -> Signifikanter Zusammenhang!")
     print("-" * 30)
 
     # C) Gruppe: Geschlecht (Mann vs. Frau)
