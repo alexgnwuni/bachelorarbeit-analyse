@@ -100,11 +100,22 @@ def aggregate_user_stats(df):
 def run_statistics(user_stats, df):
     print("=== STATISTISCHE AUSWERTUNG ===\n")
     
+    # Konstante für Mindestanzahl Szenarien
+    MIN_SCENARIOS = 3
+    
     # Gesamtanzahl aller Teilnehmer (mit Accuracy)
     total_with_accuracy = len(user_stats[user_stats['accuracy'].notna()])
     print(f"Gesamt Teilnehmer mit Accuracy-Daten: {total_with_accuracy}")
     
-    # Durchschnittliche Runs pro Teilnehmer
+    # Filterung: Nur Teilnehmer mit mindestens MIN_SCENARIOS Szenarien
+    user_stats = user_stats[user_stats['num_scenarios'] >= MIN_SCENARIOS]
+    total_after_filter = len(user_stats[user_stats['accuracy'].notna()])
+    excluded_count = total_with_accuracy - total_after_filter
+    
+    print(f"Filterung: Mindestanzahl Szenarien = {MIN_SCENARIOS}")
+    print(f"Teilnehmer mit mindestens {MIN_SCENARIOS} Szenarien: {total_after_filter} (ausgeschlossen: {excluded_count})\n")
+    
+    # Durchschnittliche Runs pro Teilnehmer (nach Filterung)
     avg_runs = user_stats['num_scenarios'].mean()
     print(f"Durchschnittliche Runs pro Teilnehmer: {avg_runs:.2f}\n")
     
@@ -153,10 +164,10 @@ def run_statistics(user_stats, df):
     females = user_stats[gender_lower.str.contains('weiblich|frau', na=False, regex=True)]
     no_gender = user_stats[user_stats['gender'].isna()]
     
-    print(f"   Männlich: {len(males)} ({len(males)/total_with_accuracy*100:.1f}%)")
-    print(f"   Weiblich: {len(females)} ({len(females)/total_with_accuracy*100:.1f}%)")
+    print(f"   Männlich: {len(males)} ({len(males)/total_after_filter*100:.1f}%)")
+    print(f"   Weiblich: {len(females)} ({len(females)/total_after_filter*100:.1f}%)")
     if len(no_gender) > 0:
-        print(f"   Keine Angabe: {len(no_gender)} ({len(no_gender)/total_with_accuracy*100:.1f}%)")
+        print(f"   Keine Angabe: {len(no_gender)} ({len(no_gender)/total_after_filter*100:.1f}%)")
     
     print("\n" + "=" * 30 + "\n")
 
@@ -229,7 +240,7 @@ def run_statistics(user_stats, df):
     print(acc_by_cat)
     print("\n")
 
-    return acc_by_cat
+    return acc_by_cat, user_stats
 
 # ---------------------------------------------------------
 # 4. QUALITATIVE ANALYSE (Keywords)
@@ -342,14 +353,14 @@ if __name__ == "__main__":
         # 2. Aggregieren
         df_users = aggregate_user_stats(df_full)
         
-        # 3. Statistik & Ausgabe
-        category_stats = run_statistics(df_users, df_full)
+        # 3. Statistik & Ausgabe (gibt gefilterte user_stats zurück)
+        category_stats, df_users_filtered = run_statistics(df_users, df_full)
         
         # 4. Text Analyse
         text_stats = analyze_text_reasoning(df_full)
         
-        # 5. Plotten
-        plot_results(df_users, category_stats, text_stats)
+        # 5. Plotten (verwendet gefilterte user_stats)
+        plot_results(df_users_filtered, category_stats, text_stats)
         
     except FileNotFoundError as e:
         print(f"FEHLER: Datei nicht gefunden. {e}")
