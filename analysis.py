@@ -11,8 +11,8 @@ import re
 
 def load_and_clean_data(runs_path, participants_path):
     # Laden der CSV-Dateien
-    runs = pd.read_csv("scenario_runs_rows-8.csv")
-    participants = pd.read_csv("participants_rows-9.csv")
+    runs = pd.read_csv("scenario_runs_rows-9.csv")
+    participants = pd.read_csv("participants_rows-10.csv")
 
     # Umbenennen für sauberen Merge
     participants.rename(columns={'id': 'participant_id'}, inplace=True)
@@ -29,19 +29,15 @@ def load_and_clean_data(runs_path, participants_path):
         return s in ['true', 't', '1', 'wahr', 'yes']
 
     # Konvertierung relevanter Spalten
-    df['is_biased_ground_truth'] = df['is_biased'].apply(parse_bool) # Ist das Szenario wirklich biased?
-    df['is_correct'] = df['is_correct'].apply(parse_bool)            # Hat der User es richtig erkannt?
+    df['is_correct'] = df['is_correct'].apply(parse_bool)                  # Hat der User korrekt bewertet?
+    df['user_response_biased'] = df['is_biased'].apply(parse_bool)        # Nutzerantwort: biased ja/nein
     df['age'] = pd.to_numeric(df['age'], errors='coerce')
     df['ai_knowledge'] = pd.to_numeric(df['ai_knowledge'], errors='coerce')
     df['ai_attitude'] = pd.to_numeric(df['ai_attitude'], errors='coerce')
     df['ai_reliance'] = pd.to_numeric(df['ai_reliance'], errors='coerce')
 
-    # Ableitung der User-Antwort (Wichtig für False Positive Rate)
-    # Logik: Wenn User richtig lag, entspricht seine Antwort dem Ground Truth. Sonst dem Gegenteil.
-    df['user_response_biased'] = df.apply(
-        lambda row: row['is_biased_ground_truth'] if row['is_correct'] else not row['is_biased_ground_truth'], 
-        axis=1
-    )
+    # Ableitung der Ground Truth: Alle Szenarien sind biased, außer status-neutral-1
+    df['is_biased_ground_truth'] = df['scenario_id'] != 'status-neutral-1'
 
     # Ableitung der Bias-Stärke aus der scenario_id (z.B. "status-neutral-1" oder "gender-high-2")
     def extract_strength(s_id):
@@ -243,7 +239,74 @@ def run_statistics(user_stats, df):
     return acc_by_cat, user_stats
 
 # ---------------------------------------------------------
-# 4. QUALITATIVE ANALYSE (Keywords)
+# 4. SZENARIO-ANALYSE (pro scenario_id)
+# ---------------------------------------------------------
+
+def analyze_scenario_performance(df_runs):
+    """
+    Beschreibt, wie gut einzelne Szenarien (scenario_id) erkannt werden.
+    Es werden alle Runs berücksichtigt, unabhängig davon, wie viele Szenarien
+    ein*e Teilnehmer*in insgesamt bearbeitet hat.
+    """
+    df_filtered_runs = df_runs.copy()
+
+    if df_filtered_runs.empty:
+        print("=== Szenario-Performance (pro scenario_id) ===")
+        print("Keine Daten nach Filterung verfügbar.\n")
+        return None, df_filtered_runs
+
+    scenario_overview = (
+        df_filtered_runs
+        .groupby('scenario_id')
+        .agg(
+            bias_category=('bias_category', 'first'),
+            is_biased=('is_biased_ground_truth', 'first'),
+            n_runs=('id', 'count'),
+            n_participants=('participant_id', 'nunique'),
+            accuracy=('is_correct', 'mean')
+        )
+        .sort_values('accuracy', ascending=False)
+    )
+
+    print("=== Szenario-Performance (pro scenario_id) ===")
+    print(scenario_overview)
+    print("\n")
+
+    return scenario_overview, df_filtered_runs
+
+
+def print_scenario_details(df_filtered_runs, scenario_id):
+    """
+    Detailansicht: Zeigt für ein konkretes scenario_id, wie einzelne Teilnehmer
+    entschieden haben (inkl. einiger demografischer Variablen).
+    Diese Funktion wird nicht automatisch im Main ausgeführt, sondern kann
+    bei Bedarf manuell aufgerufen werden.
+    """
+    subset = df_filtered_runs[df_filtered_runs['scenario_id'] == scenario_id]
+
+    print(f"=== Details für Szenario {scenario_id} ===")
+    if subset.empty:
+        print("Keine Daten für dieses Szenario (nach Filterung).\n")
+        return
+
+    cols = [
+        'participant_id',
+        'is_correct',
+        'is_biased_ground_truth',
+        'bias_category',
+        'age',
+        'gender',
+        'ai_knowledge',
+        'ai_attitude',
+        'ai_reliance'
+    ]
+    existing_cols = [c for c in cols if c in subset.columns]
+    print(subset[existing_cols])
+    print("\n")
+
+
+# ---------------------------------------------------------
+# 5. QUALITATIVE ANALYSE (Keywords)
 # ---------------------------------------------------------
 
 def analyze_text_reasoning(df):
@@ -337,8 +400,8 @@ def plot_results(user_stats, acc_by_cat, keyword_counts):
 
 if __name__ == "__main__":
     # Dateinamen anpassen, falls nötig
-    FILE_RUNS = 'scenario_runs_rows-8.csv'
-    FILE_PARTICIPANTS = 'participants_rows-9.csv'
+    FILE_RUNS = 'scenario_runs_rows-9.csv'
+    FILE_PARTICIPANTS = 'participants_rows-10.csv'
 
     try:
         # 1. Daten laden
@@ -355,6 +418,11 @@ if __name__ == "__main__":
         
         # 3. Statistik & Ausgabe (gibt gefilterte user_stats zurück)
         category_stats, df_users_filtered = run_statistics(df_users, df_full)
+
+        # 3b. Szenario-Analyse (pro scenario_id, nutzt ALLE Runs)
+        scenario_overview, df_filtered_runs = analyze_scenario_performance(df_full)
+        # Für Detailansichten einzelner Szenarien kann man z.B. aufrufen:
+        # print_scenario_details(df_filtered_runs, \"compas-biased-1\")
         
         # 4. Text Analyse
         text_stats = analyze_text_reasoning(df_full)
