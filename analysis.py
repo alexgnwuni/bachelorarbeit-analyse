@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy import stats
 import re
+import json
 
 # ---------------------------------------------------------
 # 1. DATEN LADEN & BEREINIGEN
@@ -87,6 +88,83 @@ def aggregate_user_stats(df):
     # Fillna für FPR mit 0, falls User keine neutralen Szenarien falsch hatte (aber welche gesehen hat)
     user_stats['fpr'] = user_stats['fpr'].fillna(0) 
     
+    # Berechnung der False Positive Rate für falsche Kategorien (FPR Category)
+    # FPR Category = (Anzahl biasede Szenarien mit falscher Kategorie) / (Anzahl aller biaseden Szenarien, bei denen Bias erkannt wurde)
+    # WICHTIG: Nur Szenarien, die eine Kategorie erfordern:
+    # - gender-biased-1 und age-biased-1: guessed_bias_category muss angegeben werden
+    # - explore-*: bias_strength_ratings JSON wird ausgewertet
+    # - status-neutral-1 und compas-biased-1: werden ausgeschlossen (keine Kategorie erforderlich)
+    
+    biased_scenarios = df[df['is_biased_ground_truth'] == True]
+    
+    if not biased_scenarios.empty:
+        # Nur Szenarien, bei denen der Nutzer Bias erkannt hat
+        biased_detected = biased_scenarios[biased_scenarios['user_response_biased'] == True].copy()
+        
+        if not biased_detected.empty:
+            # Filtere Szenarien, die keine Kategorie erfordern (status-neutral-1, compas-biased-1)
+            # Diese haben immer null in guessed_bias_category und werden ausgeschlossen
+            scenarios_requiring_category = biased_detected[
+                ~biased_detected['scenario_id'].isin(['status-neutral-1', 'compas-biased-1'])
+            ]
+            
+            if not scenarios_requiring_category.empty:
+                def has_wrong_category(row):
+                    scenario_id = str(row.get('scenario_id', '')).lower()
+                    actual_category = str(row.get('bias_category', '')).strip().lower()
+                    
+                    # Für explore-* Szenarien: bias_strength_ratings JSON auswerten
+                    if scenario_id.startswith('explore-'):
+                        ratings_str = row.get('bias_strength_ratings', '')
+                        if pd.isna(ratings_str) or str(ratings_str).strip() == '' or str(ratings_str).strip().lower() == 'null':
+                            return True  # Keine Ratings = falsch
+                        
+                        try:
+                            # Parse JSON
+                            if isinstance(ratings_str, str):
+                                ratings = json.loads(ratings_str)
+                            else:
+                                ratings = ratings_str
+                            
+                            if not isinstance(ratings, dict):
+                                return True  # Ungültiges Format
+                            
+                            # Prüfe, ob die richtige Kategorie den höchsten Wert hat (oder mindestens gleich hoch)
+                            if actual_category not in ratings:
+                                return True  # Richtige Kategorie fehlt
+                            
+                            actual_value = ratings.get(actual_category, 0)
+                            max_value = max(ratings.values()) if ratings else 0
+                            
+                            # Falsch, wenn die richtige Kategorie nicht den höchsten Wert hat
+                            return actual_value < max_value
+                            
+                        except (json.JSONDecodeError, ValueError, TypeError):
+                            return True  # Fehler beim Parsen = falsch
+                    
+                    # Für gender-biased-1 und age-biased-1: guessed_bias_category muss mit bias_category übereinstimmen
+                    else:
+                        guessed_val = row.get('guessed_bias_category', np.nan)
+                        
+                        if pd.isna(guessed_val) or str(guessed_val).strip() == '' or str(guessed_val).strip().lower() == 'null':
+                            return True  # Keine Kategorie geraten = falsch
+                        
+                        guessed = str(guessed_val).strip().lower()
+                        return guessed != actual_category
+                
+                scenarios_requiring_category['wrong_category'] = scenarios_requiring_category.apply(has_wrong_category, axis=1)
+                fpr_category = scenarios_requiring_category.groupby('participant_id')['wrong_category'].mean()
+                user_stats['fpr_category'] = fpr_category
+            else:
+                user_stats['fpr_category'] = np.nan
+        else:
+            user_stats['fpr_category'] = np.nan
+    else:
+        user_stats['fpr_category'] = np.nan
+    
+    # Fillna für FPR Category mit 0, falls User keine biaseden Szenarien mit falscher Kategorie hatte
+    user_stats['fpr_category'] = user_stats['fpr_category'].fillna(0)
+    
     return user_stats.reset_index()
 
 # ---------------------------------------------------------
@@ -103,17 +181,33 @@ def run_statistics(user_stats, df):
     total_with_accuracy = len(user_stats[user_stats['accuracy'].notna()])
     print(f"Gesamt Teilnehmer mit Accuracy-Daten: {total_with_accuracy}")
     
+    # Durchschnittliche Runs pro Teilnehmer VOR Filterung (alle mit mindestens 1 Szenario)
+    avg_runs_before = user_stats['num_scenarios'].mean()
+    print(f"Durchschnittliche Runs pro Teilnehmer (vor Filterung, alle mit ≥1 Szenario): {avg_runs_before:.2f}")
+    
     # Filterung: Nur Teilnehmer mit mindestens MIN_SCENARIOS Szenarien
     user_stats = user_stats[user_stats['num_scenarios'] >= MIN_SCENARIOS]
     total_after_filter = len(user_stats[user_stats['accuracy'].notna()])
     excluded_count = total_with_accuracy - total_after_filter
     
     print(f"Filterung: Mindestanzahl Szenarien = {MIN_SCENARIOS}")
-    print(f"Teilnehmer mit mindestens {MIN_SCENARIOS} Szenarien: {total_after_filter} (ausgeschlossen: {excluded_count})\n")
+    print(f"Teilnehmer mit mindestens {MIN_SCENARIOS} Szenarien: {total_after_filter} (ausgeschlossen: {excluded_count})")
     
     # Durchschnittliche Runs pro Teilnehmer (nach Filterung)
-    avg_runs = user_stats['num_scenarios'].mean()
-    print(f"Durchschnittliche Runs pro Teilnehmer: {avg_runs:.2f}\n")
+    avg_runs_after = user_stats['num_scenarios'].mean()
+    print(f"Durchschnittliche Runs pro Teilnehmer (nach Filterung, ≥{MIN_SCENARIOS} Szenarien): {avg_runs_after:.2f}")
+    
+    # Durchschnittliche Genauigkeit (nach Filterung)
+    avg_accuracy = user_stats['accuracy'].mean()
+    print(f"Durchschnittliche Genauigkeit (nach Filterung, ≥{MIN_SCENARIOS} Szenarien): {avg_accuracy:.2%}")
+    
+    # Durchschnittliche False Positive Rate (Bias in neutralen Szenarien vermutet)
+    avg_fpr = user_stats['fpr'].mean()
+    print(f"Durchschnittliche False Positive Rate (FPR): {avg_fpr:.2%} (Bias in neutralen Szenarien vermutet)")
+    
+    # Durchschnittliche False Positive Rate für falsche Kategorien
+    avg_fpr_category = user_stats['fpr_category'].mean()
+    print(f"Durchschnittliche FPR für falsche Kategorien: {avg_fpr_category:.2%} (Bias erkannt, aber falsche Kategorie gewählt)\n")
     
     # Demografische Statistiken
     print("=== DEMOGRAFISCHE ANGABEN ===\n")
