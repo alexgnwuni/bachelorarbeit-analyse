@@ -1,154 +1,172 @@
-# 📊 Data Analysis Environment
+# 📊 Bias-Erkennungsanalyse
 
-A comprehensive Python-based data analysis web application built with Streamlit. Upload CSV files and perform interactive data exploration, statistical analysis, and visualization.
+Python-Skript zur statistischen Analyse von Bias-Erkennungsdaten aus einer Studie zur KI-Bias-Wahrnehmung.
 
-## ✨ Features
+## 📋 Überblick
 
-### 📁 Data Management
-- Upload up to 3 CSV files simultaneously
-- Automatic data type detection
-- Data preview and exploration
-- Missing data analysis
-- Column information and statistics
+Das Skript `analysis.py` analysiert Daten aus einer Studie, in der Teilnehmer*innen KI-Szenarien auf Bias bewertet haben. Es führt statistische Analysen durch, erstellt Visualisierungen und generiert detaillierte Berichte.
 
-### 📈 Correlation Analysis
-- Multiple correlation methods (Pearson, Spearman, Kendall)
-- Interactive correlation heatmaps
-- Target variable correlation analysis
-- Top correlations visualization
+### Hauptfunktionen
 
-### 📊 Visualizations
-- **Scatter Plots**: Interactive with color and size encoding
-- **Histograms**: Customizable distribution plots
-- **Box Plots**: Compare multiple variables
-- **Line Plots**: Multi-variable trend analysis
-- **Pair Plots**: Comprehensive relationship analysis
+- **Datenverarbeitung**: Merge von Szenario-Runs und Teilnehmerdaten
+- **Statistische Analysen**: 
+  - Korrelationen (Alter, KI-Wissen, AI-Attitude, AI-Reliance vs. Erkennungsleistung)
+  - Geschlechtervergleiche
+  - Erkennungsraten pro Bias-Kategorie
+  - False Positive Rate (FPR) Analyse
+- **Demografische Statistiken**: Alter, KI-Wissen, Einstellungen, Geschlechterverteilung
+- **Szenario-Performance**: Detaillierte Analyse pro Szenario-ID
+- **Visualisierungen**: Automatische Generierung von Grafiken
+- **Qualitative Analyse**: Keyword-basierte Analyse der Begründungen
 
-### 🔍 Advanced Analysis
-- Distribution statistics (mean, median, skewness, kurtosis)
-- Outlier detection using IQR method
-- Group statistics and aggregations
-- Percentile analysis
+## 🚀 Installation & Setup
 
-### 🔗 Data Operations
-- Merge multiple datasets
-- Support for different join types (inner, outer, left, right)
-- Export merged datasets
+### 1. Virtuelle Umgebung erstellen
 
-## 🚀 Quick Start
+**Wichtig**: Es wird empfohlen, eine virtuelle Umgebung zu verwenden, um Abhängigkeiten sauber zu verwalten.
 
-### Prerequisites
-- Python 3.8 or higher
-- pip package manager
-
-### Installation
-
-1. Clone the repository:
+#### macOS/Linux:
 ```bash
-git clone https://github.com/alexgnwuni/bachelorarbeit-analyse.git
-cd bachelorarbeit-analyse
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-2. Install dependencies:
+#### Windows:
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### 2. Dependencies installieren
+
+Nach Aktivierung der virtuellen Umgebung:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### Running the Application
+### 3. Dateien vorbereiten
 
-Start the Streamlit application:
-```bash
-streamlit run app.py
+Stelle sicher, dass folgende CSV-Dateien im Projektverzeichnis vorhanden sind:
+- `scenario_runs_rows-10.csv` (oder entsprechend angepasst)
+- `participants_rows-11.csv` (oder entsprechend angepasst)
+
+Die Dateinamen können in `analysis.py` im `__main__`-Block angepasst werden:
+```python
+FILE_RUNS = 'scenario_runs_rows-10.csv'
+FILE_PARTICIPANTS = 'participants_rows-11.csv'
 ```
 
-The application will open in your default web browser at `http://localhost:8501`
+## ▶️ Ausführung
 
-## 📖 Usage Guide
+### Skript starten
 
-### 1. Upload Data
-1. Use the sidebar to upload up to 3 CSV files
-2. Click "Load Datasets" to process the files
-3. Each dataset will be labeled (Dataset_1, Dataset_2, Dataset_3)
+```bash
+python analysis.py
+```
 
-### 2. Explore Data
-- Navigate to the **Data Overview** tab
-- View data preview, column information, and summary statistics
-- Check for missing values
+### Was passiert beim Ausführen?
 
-### 3. Analyze Correlations
-- Go to the **Correlations** tab
-- Select a correlation method
-- View the correlation heatmap
-- Analyze correlations with a target variable
+1. **Daten laden**: Die CSV-Dateien werden geladen und gemergt
+2. **Export**: Ein gemergtes DataFrame wird als `merged_data_export.csv` exportiert
+3. **Statistische Auswertung**: 
+   - Filterung nach Mindestanzahl Szenarien (Standard: ≥3)
+   - Demografische Statistiken
+   - Korrelationsanalysen
+   - Geschlechtervergleiche
+   - Bias-Kategorie-Analysen
+4. **Szenario-Performance**: Analyse pro Szenario-ID
+5. **Qualitative Analyse**: Keyword-Analyse der Begründungen
+6. **Visualisierung**: Grafiken werden generiert und als `auswertung_ergebnisse.png` gespeichert
 
-### 4. Create Visualizations
-- Navigate to the **Visualizations** tab
-- Choose from various plot types
-- Select columns and customize settings
-- Interact with plots for detailed insights
+## 📊 Ausgabe
 
-### 5. Advanced Analysis
-- Use the **Advanced Analysis** tab for:
-  - Distribution analysis with statistical metrics
-  - Outlier detection
-  - Group-based statistics
+### Konsolen-Ausgabe
 
-### 6. Merge Datasets
-- Go to the **Data Merging** tab
-- Select two datasets to merge
-- Choose a common column and merge type
-- Download the merged dataset
+Das Skript gibt folgende Statistiken aus:
+
+- **Grundstatistiken**: Anzahl Teilnehmer, durchschnittliche Runs
+- **Demografische Angaben**: Alter, KI-Wissen, AI-Attitude, AI-Reliance, Geschlechterverteilung
+- **Korrelationen**: 
+  - Alter vs. Erkennungsleistung
+  - KI-Wissen vs. Erkennungsleistung
+  - AI-Attitude vs. Erkennungsleistung
+  - AI-Reliance vs. Erkennungsleistung
+- **Geschlechtervergleich**: Mann-Whitney-U Test
+- **Bias-Kategorien**: Erkennungsrate pro Kategorie (age, ethnicity, gender, status)
+- **Szenario-Performance**: Detaillierte Tabelle pro Szenario-ID
+- **Qualitative Analyse**: Häufigkeit von Argumentationsmustern
+
+### Generierte Dateien
+
+- `merged_data_export.csv`: Vollständiges gemergtes Dataset
+- `auswertung_ergebnisse.png`: Visualisierungen (6 Grafiken)
+
+## ⚙️ Konfiguration
+
+### Mindestanzahl Szenarien
+
+In der Funktion `run_statistics()` kann die Mindestanzahl an Szenarien pro Teilnehmer angepasst werden:
+
+```python
+MIN_SCENARIOS = 3  # Standard: 3
+```
+
+Teilnehmer mit weniger Szenarien werden von den statistischen Analysen ausgeschlossen.
+
+### Ground Truth
+
+Die Ground Truth wird automatisch aus der `scenario_id` abgeleitet:
+- Alle Szenarien sind **biased** (`is_biased_ground_truth = True`)
+- Außer: `status-neutral-1` ist **nicht biased** (`is_biased_ground_truth = False`)
 
 ## 📦 Dependencies
 
-- **pandas**: Data manipulation and analysis
-- **matplotlib**: Static plotting
-- **seaborn**: Statistical visualizations
-- **streamlit**: Web application framework
-- **numpy**: Numerical computing
-- **scipy**: Scientific computing
-- **plotly**: Interactive visualizations
-- **openpyxl**: Excel file support
+- **pandas**: Datenmanipulation und -analyse
+- **numpy**: Numerische Berechnungen
+- **matplotlib**: Visualisierungen
+- **seaborn**: Statistische Grafiken
+- **scipy**: Statistische Tests (Spearman, Mann-Whitney-U)
 
-## 🎨 Customization
+## 📝 Beispiel-Ausgabe
 
-### Plot Styles
-The application supports multiple matplotlib styles:
-- Default
-- Seaborn
-- ggplot
-- Dark background
+```
+=== STATISTISCHE AUSWERTUNG ===
 
-Select your preferred style from the sidebar.
+Gesamt Teilnehmer mit Accuracy-Daten: 31
+Filterung: Mindestanzahl Szenarien = 3
+Teilnehmer mit mindestens 3 Szenarien: 28 (ausgeschlossen: 3)
 
-## 📝 Example Use Cases
+=== DEMOGRAFISCHE ANGABEN ===
 
-1. **Sales Analysis**: Upload sales data, analyze trends, correlations between price and sales volume
-2. **Scientific Research**: Compare experimental data across multiple datasets, visualize distributions
-3. **Financial Analysis**: Analyze stock prices, correlations between different assets
-4. **Quality Control**: Detect outliers in manufacturing data, group statistics by product type
+Durchschnittsalter: 39.4 Jahre (n=28, Min: 17, Max: 84)
+Durchschnittliches KI-Wissen (1-5): 2.81 (n=31)
+...
 
-## 🤝 Contributing
+=== Szenario-Performance (pro scenario_id) ===
+                           bias_category  is_biased  n_runs  n_participants  accuracy
+scenario_id                                                                          
+...
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🔧 Troubleshooting
 
-## 📄 License
+### Fehler: "ModuleNotFoundError"
+- Stelle sicher, dass die virtuelle Umgebung aktiviert ist
+- Installiere alle Dependencies: `pip install -r requirements.txt`
 
-This project is available for academic and educational purposes.
+### Fehler: "FileNotFoundError"
+- Überprüfe, ob die CSV-Dateien im richtigen Verzeichnis liegen
+- Passe die Dateinamen in `analysis.py` an
 
-## 👤 Author
+### Fehler bei der Ausführung
+- Überprüfe, ob Python 3.8+ verwendet wird: `python --version`
+- Stelle sicher, dass alle CSV-Dateien korrekt formatiert sind
+
+## 👤 Autor
 
 Alexander Gnwuni - Bachelor Thesis Project
 
-## 🐛 Issues
+## 📄 Lizenz
 
-If you encounter any issues or have suggestions, please open an issue on GitHub.
-
-## 🔮 Future Enhancements
-
-- [ ] Support for more file formats (Excel, JSON)
-- [ ] Machine learning integration
-- [ ] Time series analysis
-- [ ] Export reports as PDF
-- [ ] Database connectivity
-- [ ] Custom plot themes
+Dieses Projekt ist für akademische und Bildungszwecke verfügbar.

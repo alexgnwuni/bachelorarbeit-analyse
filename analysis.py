@@ -11,8 +11,8 @@ import re
 
 def load_and_clean_data(runs_path, participants_path):
     # Laden der CSV-Dateien
-    runs = pd.read_csv("scenario_runs_rows-9.csv")
-    participants = pd.read_csv("participants_rows-10.csv")
+    runs = pd.read_csv("scenario_runs_rows-10.csv")
+    participants = pd.read_csv("participants_rows-11.csv")
 
     # Umbenennen für sauberen Merge
     participants.rename(columns={'id': 'participant_id'}, inplace=True)
@@ -400,8 +400,8 @@ def plot_results(user_stats, acc_by_cat, keyword_counts):
 
 if __name__ == "__main__":
     # Dateinamen anpassen, falls nötig
-    FILE_RUNS = 'scenario_runs_rows-9.csv'
-    FILE_PARTICIPANTS = 'participants_rows-10.csv'
+    FILE_RUNS = 'scenario_runs_rows-10.csv'
+    FILE_PARTICIPANTS = 'participants_rows-11.csv'
 
     try:
         # 1. Daten laden
