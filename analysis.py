@@ -361,8 +361,13 @@ def analyze_scenario_performance(df_runs):
         )
         .sort_values('accuracy', ascending=False)
     )
+    
+    # Filterung: Nur Szenarien mit mindestens 3 Runs
+    MIN_RUNS = 3
+    scenario_overview = scenario_overview[scenario_overview['n_runs'] >= MIN_RUNS]
 
     print("=== Szenario-Performance (pro scenario_id) ===")
+    print(f"Filterung: Nur Szenarien mit mindestens {MIN_RUNS} Runs")
     print(scenario_overview)
     print("\n")
 
@@ -446,8 +451,8 @@ def plot_results(user_stats, acc_by_cat, keyword_counts):
     # Plot 1: Alter vs Accuracy
     ax1 = fig.add_subplot(gs[0, 0])
     sns.regplot(x='age', y='accuracy', data=user_stats, ax=ax1, color='#2ecc71', scatter_kws={'alpha':0.6})
-    ax1.set_title('Korrelation: Alter & Erkennungsleistung')
-    ax1.set_ylabel('Accuracy')
+    ax1.set_title('Korrelation: Alter & Genauigkeit')
+    ax1.set_ylabel('Genauigkeit')
     ax1.set_xlabel('Alter')
     ax1.set_ylim(0, 1.05)
 
