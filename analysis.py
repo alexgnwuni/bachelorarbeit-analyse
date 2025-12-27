@@ -40,14 +40,17 @@ def load_and_clean_data(runs_path, participants_path):
     # Ableitung der Ground Truth: Alle Szenarien sind biased, außer status-neutral-1
     df['is_biased_ground_truth'] = df['scenario_id'] != 'status-neutral-1'
 
-    # Ableitung der Bias-Stärke aus der scenario_id (z.B. "status-neutral-1" oder "gender-high-2")
+    # Ableitung der Bias-Stärke aus der scenario_id (z.B. "explore-age-subtle" oder "gender-high-2")
     def extract_strength(s_id):
         if pd.isna(s_id): return 'unknown'
         s_id = str(s_id).lower()
         if 'neutral' in s_id: return 'neutral'
+        if 'subtle' in s_id: return 'subtle'
+        if 'moderate' in s_id: return 'moderate'
+        if 'strong' in s_id: return 'strong'
         if 'low' in s_id or 'weak' in s_id: return 'low'
         if 'medium' in s_id: return 'medium'
-        if 'high' in s_id or 'strong' in s_id: return 'high'
+        if 'high' in s_id: return 'high'
         return 'unknown'
 
     df['bias_strength'] = df['scenario_id'].apply(extract_strength)
@@ -329,8 +332,31 @@ def run_statistics(user_stats, df):
     print("4. Erkennungsrate pro Bias-Kategorie (Sensitivity):")
     print(acc_by_cat)
     print("\n")
+    
+    # E) Deskriptiv: Accuracy pro Bias-Stärke (subtle, moderate, strong)
+    # Nur explore-* Szenarien haben explizite Stärke-Angaben in der scenario_id
+    explore_only = biased_only[biased_only['scenario_id'].str.contains('explore-', na=False)]
+    
+    if not explore_only.empty:
+        acc_by_strength = explore_only.groupby('bias_strength')['is_correct'].agg(['mean', 'count'])
+        # Sortiere nach logischer Reihenfolge
+        strength_order = ['subtle', 'moderate', 'strong']
+        acc_by_strength = acc_by_strength.reindex([s for s in strength_order if s in acc_by_strength.index])
+        
+        print("5. Erkennungsrate pro Bias-Stärke (nur explore-* Szenarien):")
+        print(acc_by_strength)
+        print("\n")
+        
+        # Optional: Kombination von Kategorie + Stärke
+        acc_by_cat_strength = explore_only.groupby(['bias_category', 'bias_strength'])['is_correct'].agg(['mean', 'count'])
+        print("6. Erkennungsrate nach Kategorie & Stärke (explore-* Szenarien):")
+        print(acc_by_cat_strength)
+        print("\n")
+    else:
+        acc_by_strength = None
+        print("5. Keine explore-Szenarien für Bias-Stärke-Analyse verfügbar.\n")
 
-    return acc_by_cat, user_stats
+    return acc_by_cat, user_stats, acc_by_strength
 
 # ---------------------------------------------------------
 # 4. SZENARIO-ANALYSE (pro scenario_id)
@@ -445,8 +471,8 @@ def analyze_text_reasoning(df):
 def plot_results(user_stats, acc_by_cat, keyword_counts):
     sns.set_theme(style="whitegrid")
     
-    fig = plt.figure(figsize=(18, 10))
-    gs = fig.add_gridspec(2, 3)
+    fig = plt.figure(figsize=(18, 12))
+    gs = fig.add_gridspec(3, 3)
 
     # Plot 1: Alter vs Accuracy
     ax1 = fig.add_subplot(gs[0, 0])
@@ -469,24 +495,52 @@ def plot_results(user_stats, acc_by_cat, keyword_counts):
     ax3.set_title('Verteilung der False Positive Rate')
     ax3.set_xlabel('FPR (Bias in neutralen Szenarien vermutet)')
 
-    # Plot 4: Kategorien Performance
-    ax4 = fig.add_subplot(gs[1, 0:2]) # Breiter
+    # Plot 4: Alter vs KI-Wissen
+    ax4 = fig.add_subplot(gs[1, 0])
+    # Nur Daten mit Alter und KI-Wissen
+    age_knowledge_data = user_stats[['age', 'ai_knowledge']].dropna()
+    if not age_knowledge_data.empty:
+        sns.regplot(x='age', y='ai_knowledge', data=age_knowledge_data, ax=ax4, color='#9b59b6', scatter_kws={'alpha':0.6})
+        ax4.set_title('Zusammenhang: Alter & KI-Wissen')
+        ax4.set_ylabel('KI-Wissen (1-5)')
+        ax4.set_xlabel('Alter')
+        ax4.set_ylim(0.5, 5.5)
+    else:
+        ax4.text(0.5, 0.5, 'Keine Daten verfügbar', ha='center', va='center', transform=ax4.transAxes)
+        ax4.set_title('Zusammenhang: Alter & KI-Wissen')
+
+    # Plot 5: Kategorien Performance
+    ax5 = fig.add_subplot(gs[1, 1:3]) # Breiter
     # Sortieren für bessere Optik
     acc_by_cat_sorted = acc_by_cat.sort_values(by='mean', ascending=False)
-    sns.barplot(x=acc_by_cat_sorted.index, y=acc_by_cat_sorted['mean'], ax=ax4, palette='viridis')
-    ax4.set_title('Erkennungsrate nach Bias-Kategorie')
-    ax4.set_ylabel('Anteil korrekt erkannt')
-    ax4.set_ylim(0, 1)
+    sns.barplot(x=acc_by_cat_sorted.index, y=acc_by_cat_sorted['mean'], ax=ax5, palette='viridis')
+    ax5.set_title('Erkennungsrate nach Bias-Kategorie')
+    ax5.set_ylabel('Anteil korrekt erkannt')
+    ax5.set_ylim(0, 1)
     for i, v in enumerate(acc_by_cat_sorted['mean']):
-        ax4.text(i, v + 0.02, f"{v:.1%}", ha='center', fontweight='bold')
+        ax5.text(i, v + 0.02, f"{v:.1%}", ha='center', fontweight='bold')
 
-    # Plot 5: Qualitative Keywords
-    ax5 = fig.add_subplot(gs[1, 2])
+    # Plot 6: Qualitative Keywords
+    ax6 = fig.add_subplot(gs[2, 0:2])
     keys = list(keyword_counts.keys())
     vals = list(keyword_counts.values())
-    sns.barplot(x=vals, y=keys, ax=ax5, palette='magma', orient='h')
-    ax5.set_title('Qualitative Analyse: Argumentationsmuster')
-    ax5.set_xlabel('Anzahl Nennungen')
+    sns.barplot(x=vals, y=keys, ax=ax6, palette='magma', orient='h')
+    ax6.set_title('Qualitative Analyse: Argumentationsmuster')
+    ax6.set_xlabel('Anzahl Nennungen')
+    
+    # Plot 7: FPR Category Distribution (optional, falls Platz)
+    ax7 = fig.add_subplot(gs[2, 2])
+    if 'fpr_category' in user_stats.columns:
+        fpr_cat_data = user_stats['fpr_category'].dropna()
+        if not fpr_cat_data.empty:
+            sns.histplot(fpr_cat_data, bins=5, kde=True, ax=ax7, color='#f39c12')
+            ax7.set_title('FPR für falsche Kategorien')
+            ax7.set_xlabel('FPR Category')
+        else:
+            ax7.text(0.5, 0.5, 'Keine Daten verfügbar', ha='center', va='center', transform=ax7.transAxes)
+            ax7.set_title('FPR für falsche Kategorien')
+    else:
+        ax7.axis('off')
 
     plt.tight_layout()
     plt.savefig('auswertung_ergebnisse.png', dpi=300)
@@ -515,8 +569,8 @@ if __name__ == "__main__":
         # 2. Aggregieren
         df_users = aggregate_user_stats(df_full)
         
-        # 3. Statistik & Ausgabe (gibt gefilterte user_stats zurück)
-        category_stats, df_users_filtered = run_statistics(df_users, df_full)
+        # 3. Statistik & Ausgabe (gibt gefilterte user_stats und Statistiken zurück)
+        category_stats, df_users_filtered, strength_stats = run_statistics(df_users, df_full)
 
         # 3b. Szenario-Analyse (pro scenario_id, nutzt ALLE Runs)
         scenario_overview, df_filtered_runs = analyze_scenario_performance(df_full)
