@@ -437,14 +437,59 @@ def print_scenario_details(df_filtered_runs, scenario_id):
 def analyze_text_reasoning(df):
     print("=== QUALITATIVE ANALYSE (Begründungen) ===")
     
-    # Einfache Keyword-Listen (erweiterbar)
+    # Einfache Keyword-Listen
     keywords = {
-        'Wortwahl/Ton': ['wortwahl', 'ton', 'formulierung', 'sprache', 'ausdruck', 'aggressiv'],
-        'Stereotype': ['stereotyp', 'klischee', 'rolle', 'typisch', 'bild', 'vorurteil'],
-        'Ungleichbehandlung': ['ungerecht', 'unfair', 'diskriminier', 'rassis', 'sexis', 'bevorzug'],
-        'Intuition/Gefühl': ['gefühl', 'bauch', 'glaube', 'wirkt', 'scheint', 'subjektiv'],
-        'Vergleich': ['vergleich', 'unterschied', 'besser als', 'schlechter als']
-    }
+    'Wortwahl/Ton': [
+        'wortwahl', 'ton', 'formulierung', 'sprache', 'ausdruck', 'aggressiv',
+        'wertend', 'negativ', 'positiv', 'adjektiv', 'herablassend', 'freundlich',
+        'wertfrei', 'wertneutral', 'respekt', 'respektvoll',
+        'höflich', 'angemessen', 'unangemessen',
+        'professionell', 'unprofessionell',
+        'einfach', 'einfache sprache', 'simpel',
+        'verzerrt', 'verzerrung'
+    ],
+    'Stereotype': [
+        'stereotyp', 'klischee', 'rolle', 'typisch', 'bild', 'vorurteil',
+        'stigma', 'verallgemeiner', 'pauschal', 'klassisch',
+        'rollenbild', 'rollenerwart', 'typisier', 'schublad',
+        'annahme', 'unterstell',
+        'voreingenommen', 'voreingenommenheit',
+        'subtil', 'implizit', 'implizierend'
+    ],
+    'Ungleichbehandlung': [
+        'ungerecht', 'unfair', 'diskriminier', 'rassis', 'sexis', 'bevorzug',
+        'benachteilig', 'ungleich', 'priorisierung', 'vorteil', 'nachteil', 'fairness',
+        'gleichbehandl', 'chancengleich', 'gleichberechtigt',
+        'priorisier', 'priorisiert', 'priorisieren',
+        'frauenfeind', 'misogyn'
+    ],
+    'Intuition/Gefühl': [
+        'gefühl', 'bauch', 'glaube', 'wirkt', 'scheint', 'subjektiv',
+        'eindruck', 'empfind', 'meiner meinung', 'denke',
+        'wirkte', 'klingt', 'kommt rüber', 'kam mir', 'für mich',
+        'vielleicht', 'vermut', 'scheinbar', 'offenbar'
+    ],
+    'Vergleich': [
+        'vergleich', 'unterschied', 'besser als', 'schlechter als',
+        'gegenüber', 'kontrast', 'abwägung', 'verhältnismäßig',
+        'im gegensatz', 'stattdessen', 'während', 'anders als', 'im vergleich zu'
+    ],
+    'Spezifische Merkmale': [
+        'alter', 'geschlecht', 'herkunft', 'ethnie', 'finanz', 'geld',
+        'bildung', 'abschluss', 'aussehen', 'religion', 'name',
+        'jung', 'jünger', 'älter', 'ältere', 'lebensalter', 'senior',
+        'frau', 'frauen', 'mann', 'männer',
+        'arm', 'reich', 'einkommen', 'vermögen', 'sozial', 'status',
+        'arabisch', 'ausländ', 'migrant', 'deutsch',
+        'religiös', 'muslim', 'christ'
+    ],
+    'Neutralität': [
+        'neutral', 'sachlich', 'objektiv', 'ausgewogen', 'faktisch',
+        'kein bias', 'unvoreingenommen', 'normal',
+        'wertfrei', 'unparteiisch', 'biasfrei',
+        'unbiased', 'biased', 'age bias'
+    ]
+}
 
     # Zählen
     results = {k: 0 for k in keywords}
