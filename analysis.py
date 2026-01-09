@@ -491,21 +491,59 @@ def analyze_text_reasoning(df):
     ]
 }
 
-    # Zählen
-    results = {k: 0 for k in keywords}
+    # Initialisiere Dictionary für jede Kategorie mit Tracking-Informationen
+    results = {
+        k: {
+            'count': 0,           # Anzahl Nennungen
+            'correct_count': 0,   # Anzahl korrekter Erkennungen
+            'total_count': 0      # Gesamtanzahl (für mean_accuracy Berechnung)
+        } for k in keywords
+    }
     
-    def scan_text(text):
-        if not isinstance(text, str): return
-        text = text.lower()
+    # Funktion zum Scannen eines Textes nach Keywords
+    def find_categories(text):
+        """Gibt Liste aller gefundenen Kategorien zurück"""
+        if not isinstance(text, str):
+            return []
+        text_lower = text.lower()
+        found_categories = []
         for cat, words in keywords.items():
-            if any(w in text for w in words):
-                results[cat] += 1
-
-    df['reasoning'].apply(scan_text)
+            if any(w in text_lower for w in words):
+                found_categories.append(cat)
+        return found_categories
     
+    # Iteriere über alle Runs und tracke Kategorien + is_correct
+    for idx, row in df.iterrows():
+        reasoning_text = row.get('reasoning', '')
+        is_correct = row.get('is_correct', False)
+        
+        # Finde alle erwähnten Kategorien in diesem Run
+        mentioned_categories = find_categories(reasoning_text)
+        
+        # Für jede erwähnte Kategorie: Update Statistiken
+        for cat in mentioned_categories:
+            results[cat]['count'] += 1
+            results[cat]['total_count'] += 1
+            if is_correct:
+                results[cat]['correct_count'] += 1
+    
+    # Ausgabe mit erweiterten Statistiken
     print("Häufigkeit genannter Aspekte in Freitexten:")
-    for k, v in results.items():
-        print(f"   {k}: {v}")
+    for k, stats in results.items():
+        count = stats['count']
+        correct = stats['correct_count']
+        total = stats['total_count']
+        
+        # Berechne durchschnittliche Accuracy
+        if total > 0:
+            mean_accuracy = correct / total
+            incorrect = total - correct
+            print(f"   {k}:")
+            print(f"     - Nennungen: {count}")
+            print(f"     - Durchschnittliche Genauigkeit: {mean_accuracy:.3f} ({mean_accuracy:.1%})")
+            print(f"     - Korrekt: {correct}, Falsch: {incorrect}")
+        else:
+            print(f"   {k}: {count}")
     
     return results
 
