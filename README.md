@@ -1,8 +1,8 @@
-# 📊 Bias-Erkennungsanalyse
+# Bias-Erkennungsanalyse
 
 Python-Skript zur statistischen Analyse von Bias-Erkennungsdaten aus einer Studie zur KI-Bias-Wahrnehmung.
 
-## 📋 Überblick
+## Überblick
 
 Das Skript `analysis.py` analysiert Daten aus einer Studie, in der Teilnehmer*innen KI-Szenarien auf Bias bewertet haben. Es führt statistische Analysen durch, erstellt Visualisierungen und generiert detaillierte Berichte.
 
@@ -17,9 +17,9 @@ Das Skript `analysis.py` analysiert Daten aus einer Studie, in der Teilnehmer*in
 - **Demografische Statistiken**: Alter, KI-Wissen, Einstellungen, Geschlechterverteilung
 - **Szenario-Performance**: Detaillierte Analyse pro Szenario-ID
 - **Visualisierungen**: Automatische Generierung von Grafiken
-- **Qualitative Analyse**: Keyword-basierte Analyse der Begründungen
+- **Qualitative Analyse**: Keyword-basierte Analyse der Begründungen inklusive durchschnittlicher Erkennungsgenauigkeit pro Kategorie
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### 1. Virtuelle Umgebung erstellen
 
@@ -57,7 +57,7 @@ FILE_RUNS = 'scenario_runs_rows-10.csv'
 FILE_PARTICIPANTS = 'participants_rows-11.csv'
 ```
 
-## ▶️ Ausführung
+## Ausführung
 
 ### Skript starten
 
@@ -79,7 +79,7 @@ python analysis.py
 5. **Qualitative Analyse**: Keyword-Analyse der Begründungen
 6. **Visualisierung**: Grafiken werden generiert und als `auswertung_ergebnisse.png` gespeichert
 
-## 📊 Ausgabe
+## Ausgabe
 
 ### Konsolen-Ausgabe
 
@@ -120,7 +120,7 @@ Die Ground Truth wird automatisch aus der `scenario_id` abgeleitet:
 - Alle Szenarien sind **biased** (`is_biased_ground_truth = True`)
 - Außer: `status-neutral-1` ist **nicht biased** (`is_biased_ground_truth = False`)
 
-## 📦 Dependencies
+## Dependencies
 
 - **pandas**: Datenmanipulation und -analyse
 - **numpy**: Numerische Berechnungen
@@ -128,7 +128,7 @@ Die Ground Truth wird automatisch aus der `scenario_id` abgeleitet:
 - **seaborn**: Statistische Grafiken
 - **scipy**: Statistische Tests (Spearman, Mann-Whitney-U)
 
-## 📝 Beispiel-Ausgabe
+## Beispiel-Ausgabe
 
 ```
 === STATISTISCHE AUSWERTUNG ===
@@ -149,7 +149,7 @@ scenario_id
 ...
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Fehler: "ModuleNotFoundError"
 - Stelle sicher, dass die virtuelle Umgebung aktiviert ist
@@ -163,10 +163,7 @@ scenario_id
 - Überprüfe, ob Python 3.8+ verwendet wird: `python --version`
 - Stelle sicher, dass alle CSV-Dateien korrekt formatiert sind
 
-## 👤 Autor
+## Autor
 
-Alexander Gnwuni - Bachelor Thesis Project
-
-## 📄 Lizenz
-
-Dieses Projekt ist für akademische und Bildungszwecke verfügbar.
+Alexander Günnewig, Matrikelnummer: 524135 im Rahmen der Bachelorarbeit mit dem Titel:
+"Nutzerzentrierte Erkennung von KI-Bias mithilfe einer interaktiven Web-App"
