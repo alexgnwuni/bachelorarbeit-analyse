@@ -102,7 +102,7 @@ Das Skript gibt folgende Statistiken aus:
 - `merged_data_export.csv`: Vollständiges gemergtes Dataset
 - `auswertung_ergebnisse.png`: Visualisierungen (6 Grafiken)
 
-## ⚙️ Konfiguration
+## Konfiguration
 
 ### Mindestanzahl Szenarien
 
