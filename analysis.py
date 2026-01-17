@@ -545,7 +545,10 @@ def analyze_text_reasoning(df):
         else:
             print(f"   {k}: {count}")
     
-    return results
+    # Erstelle einfaches Dictionary für Plot-Kompatibilität (nur Counts)
+    simple_counts = {k: v['count'] for k, v in results.items()}
+    
+    return results, simple_counts
 
 # ---------------------------------------------------------
 # 5. VISUALISIERUNG
@@ -660,11 +663,11 @@ if __name__ == "__main__":
         # Für Detailansichten einzelner Szenarien kann man z.B. aufrufen:
         # print_scenario_details(df_filtered_runs, \"compas-biased-1\")
         
-        # 4. Text Analyse
-        text_stats = analyze_text_reasoning(df_full)
+        # 4. Text Analyse (gibt erweiterte Stats und einfache Counts zurück)
+        text_stats, keyword_counts = analyze_text_reasoning(df_full)
         
         # 5. Plotten (verwendet gefilterte user_stats)
-        plot_results(df_users_filtered, category_stats, text_stats)
+        plot_results(df_users_filtered, category_stats, keyword_counts)
         
     except FileNotFoundError as e:
         print(f"FEHLER: Datei nicht gefunden. {e}")
