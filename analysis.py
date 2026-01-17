@@ -6,9 +6,8 @@ from scipy import stats
 import re
 import json
 
-# ---------------------------------------------------------
+
 # 1. DATEN LADEN & BEREINIGEN
-# ---------------------------------------------------------
 
 def load_and_clean_data(runs_path, participants_path):
     # Laden der CSV-Dateien
@@ -60,9 +59,7 @@ def load_and_clean_data(runs_path, participants_path):
 
     return df
 
-# ---------------------------------------------------------
 # 2. BERECHNUNG DER ZIELVARIABLEN (User Level)
-# ---------------------------------------------------------
 
 def aggregate_user_stats(df):
     # Basis-Metriken pro User
@@ -170,9 +167,8 @@ def aggregate_user_stats(df):
     
     return user_stats.reset_index()
 
-# ---------------------------------------------------------
+
 # 3. STATISTISCHE ANALYSEN
-# ---------------------------------------------------------
 
 def run_statistics(user_stats, df):
     print("=== STATISTISCHE AUSWERTUNG ===\n")
@@ -358,9 +354,8 @@ def run_statistics(user_stats, df):
 
     return acc_by_cat, user_stats, acc_by_strength
 
-# ---------------------------------------------------------
+
 # 4. SZENARIO-ANALYSE (pro scenario_id)
-# ---------------------------------------------------------
 
 def analyze_scenario_performance(df_runs):
     """
@@ -430,9 +425,7 @@ def print_scenario_details(df_filtered_runs, scenario_id):
     print("\n")
 
 
-# ---------------------------------------------------------
 # 5. QUALITATIVE ANALYSE (Keywords)
-# ---------------------------------------------------------
 
 def analyze_text_reasoning(df):
     print("=== QUALITATIVE ANALYSE (Begründungen) ===")
@@ -550,9 +543,7 @@ def analyze_text_reasoning(df):
     
     return results, simple_counts
 
-# ---------------------------------------------------------
 # 5. VISUALISIERUNG
-# ---------------------------------------------------------
 
 def plot_results(user_stats, acc_by_cat, keyword_counts):
     sns.set_theme(style="whitegrid")
@@ -633,9 +624,7 @@ def plot_results(user_stats, acc_by_cat, keyword_counts):
     print("\nGrafik gespeichert als 'auswertung_ergebnisse.png'")
     plt.show()
 
-# ---------------------------------------------------------
 # MAIN EXECUTION
-# ---------------------------------------------------------
 
 if __name__ == "__main__":
     # Dateinamen anpassen, falls nötig
@@ -649,7 +638,7 @@ if __name__ == "__main__":
         # Export des gemergten DataFrames
         output_file = 'merged_data_export.csv'
         df_full.to_csv(output_file, index=False, encoding='utf-8')
-        print(f"\n✅ Gemergtes DataFrame exportiert als '{output_file}'")
+        print(f"\nGemergtes DataFrame exportiert als '{output_file}'")
         print(f"   Anzahl Zeilen: {len(df_full)}, Anzahl Spalten: {len(df_full.columns)}\n")
         
         # 2. Aggregieren
