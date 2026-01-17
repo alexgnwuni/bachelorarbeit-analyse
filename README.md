@@ -1,6 +1,4 @@
-# Bias-Erkennungsanalyse
-
-Python-Skript zur statistischen Analyse von Bias-Erkennungsdaten aus einer Studie zur KI-Bias-Wahrnehmung.
+# Das ist das Repository des Python-Auswertungsskriptes der Bachelorarbeit mit dem Titel: "Nutzerzentrierte Erkennung von KI-Bias mithilfe einer interaktiven Web-App" von Alexander Günnewig, Matrikelnummer: 524135
 
 ## Überblick
 
@@ -47,9 +45,9 @@ pip install -r requirements.txt
 
 ### 3. Dateien vorbereiten
 
-Stelle sicher, dass folgende CSV-Dateien im Projektverzeichnis vorhanden sind:
-- `scenario_runs_rows-10.csv` (oder entsprechend angepasst)
-- `participants_rows-11.csv` (oder entsprechend angepasst)
+Die CSV-Dateien sind im Projektverzeichnis vorhanden:
+- `scenario_runs_rows-10.csv` 
+- `participants_rows-11.csv` 
 
 Die Dateinamen können in `analysis.py` im `__main__`-Block angepasst werden:
 ```python
@@ -112,8 +110,6 @@ In der Funktion `run_statistics()` kann die Mindestanzahl an Szenarien pro Teiln
 MIN_SCENARIOS = 3  # Standard: 3
 ```
 
-Teilnehmer mit weniger Szenarien werden von den statistischen Analysen ausgeschlossen.
-
 ### Ground Truth
 
 Die Ground Truth wird automatisch aus der `scenario_id` abgeleitet:
@@ -161,9 +157,5 @@ scenario_id
 
 ### Fehler bei der Ausführung
 - Überprüfe, ob Python 3.8+ verwendet wird: `python --version`
-- Stelle sicher, dass alle CSV-Dateien korrekt formatiert sind
 
-## Autor
 
-Alexander Günnewig, Matrikelnummer: 524135 im Rahmen der Bachelorarbeit mit dem Titel:
-"Nutzerzentrierte Erkennung von KI-Bias mithilfe einer interaktiven Web-App"
